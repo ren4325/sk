@@ -96,7 +96,7 @@ def save_images(images, folder_path, prefix):
 start_time = time.time()
 
 # 画像ファイルのパスを指定する
-image_folder_path = '/Users/reni0/OneDrive/ゼミ/picture'  # ここに画像フォルダのパスを指定
+image_folder_path = 'picture'  # ここに画像フォルダのパスを指定
 image_files = [os.path.join(image_folder_path, f) for f in os.listdir(image_folder_path) if f.endswith('.png') or f.endswith('.jpg')]
 
 # 入力画像の枚数を表示
