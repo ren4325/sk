@@ -1,0 +1,9 @@
+services:
+  pytorch-template:
+    build:
+      context: ../
+      dockerfile: ./docker/rootful/Dockerfile
+      args:
+        - UID=1000
+        - GID=1000
+
