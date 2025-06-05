@@ -44,11 +44,11 @@ image = read(data_path, input_name)
 
 original_width, original_height = image.size # 元画像のサイズ
 
-new_width, new_height = 500, 500  # 新しい画像の幅と高さ
+new_width, new_height = 800, 800  # 新しい画像の幅と高さ
 
 x, y = 700, 900  # 画像の左上の座標
 
-x_shift, y_shift = 100, 50
+x_shift, y_shift = 0, 0
 scale_factor =1.5  # 拡大・縮小倍率
 rotation_angle = 30  # 回転角度
 
@@ -57,6 +57,10 @@ cropped_image_2 = crop_2(image, original_width, original_height, new_width, new_
 
 save(cropped_image_1, data_path, output_name_1)
 save(cropped_image_2, data_path, output_name_2)
+
+#HDR用
+save(cropped_image_1, "./hdr/", output_name_1)
+
 
 
 print("画像の一部を切り抜いて cropped_image.jpg として保存しました。")

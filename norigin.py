@@ -96,7 +96,7 @@ def save_images(images, folder_path, prefix):
 start_time = time.time()
 
 # 画像ファイルのパスを指定する
-image_folder_path = 'picture'  # ここに画像フォルダのパスを指定
+image_folder_path = './hdr'  # ここに画像フォルダのパスを指定
 image_files = [os.path.join(image_folder_path, f) for f in os.listdir(image_folder_path) if f.endswith('.png') or f.endswith('.jpg')]
 
 # 入力画像の枚数を表示
@@ -104,7 +104,7 @@ print(f"入力画像の枚数: {len(image_files)}")
 
 # 画像を読み込む
 image_list = [Image.open(f) for f in image_files]
-
+    
 # 画像をテンソルに変換
 original_frames = torch.stack([torch.tensor(np.array(img)) for img in image_list])
 
