@@ -8,6 +8,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 # 画像融合の関数
+# 画像融合の関数
 def image_fusion(image_list, c=100000, sigma=25):
     T_list = []
     for image in image_list:
@@ -15,13 +16,23 @@ def image_fusion(image_list, c=100000, sigma=25):
         T = np.fft.fft2(data, axes=(0, 1))
         T_list.append(T)
 
+    # 黒除外マスク（全チャネルでしきい値10以上を情報ありとする）
+    masks = [np.any(img > 10, axis=-1, keepdims=True).astype(np.float32) for img in image_list]
+    valid_mask = np.prod(masks, axis=0)
+
     D_list = [T_list[0] - T for T in T_list]
     A_list = [(np.abs(D) ** 2) / (np.abs(D) ** 2 + c * sigma ** 2) for D in D_list]
     T_filter_list = [T + A * D for T, A, D in zip(T_list, A_list, D_list)]
 
     fused_T = sum(T_filter_list) / len(T_filter_list)
     fused_img = np.abs(np.fft.ifft2(fused_T, axes=(0, 1))).astype(np.float32)
-    return np.clip(fused_img, 0, 255)
+
+    # 欠損部を1枚目の画像で補完（必要なら他の平均でもOK）
+    fallback = image_list[0]
+    output = fused_img * valid_mask + fallback * (1 - valid_mask)
+
+    return np.clip(output, 0, 255)
+
 
 # 平均化による画像融合
 def average_fusion(image_array):
@@ -96,8 +107,10 @@ def save_images(images, folder_path, prefix):
 start_time = time.time()
 
 # 画像ファイルのパスを指定する
-image_folder_path = './hdr'  # ここに画像フォルダのパスを指定
-image_files = [os.path.join(image_folder_path, f) for f in os.listdir(image_folder_path) if f.endswith('.png') or f.endswith('.jpg')]
+image_files = [
+    './hdr/cropped_image_1.jpg',   # これが補完元（image_list[0]）
+    './hdr/filtered_image_1.jpg'   # 欠損あり（image_list[1]）
+]
 
 # 入力画像の枚数を表示
 print(f"入力画像の枚数: {len(image_files)}")

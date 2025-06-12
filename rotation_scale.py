@@ -1,4 +1,5 @@
 from PIL import Image
+import numpy as np
 
 def read(data_path, input_name):
     image = Image.open(data_path + input_name)
@@ -22,7 +23,7 @@ def crop_2(image, original_width, original_height, center_x, center_y, scale_fac
     
     cropped_image = scaled_image.crop(box_2)
     cropped_image = cropped_image.rotate(rotation_angle, center=(center_x, center_y))
-
+    
     return cropped_image
 
 def save(cropped_image, data_path, output_name):
@@ -47,6 +48,8 @@ rotation_angle = -30.15 # 回転角度
 center_x, center_y = (x + x + new_width) / 2 + + x_shift, (y + y + new_height) / 2 + y_shift# クロップ後の中心の座標
 
 cropped_image = crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
+
+cropped_image = cropped_image.resize((800, 800))
 
 save(cropped_image, data_path, output_name)
 
