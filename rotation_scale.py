@@ -32,8 +32,11 @@ def save(cropped_image, data_path, output_name):
 data_path = "./data/"
 input_name = "cropped_image_2.jpg"
 output_name = "filtered_image_1.jpg"
+output_name_mask =  "mask_image.jpg"
 
 image = read(data_path, input_name)
+
+mask_img = Image.new("RGB", (800, 800), "white")
 
 original_width, original_height = image.size # 元画像のサイズ
 
@@ -48,13 +51,16 @@ rotation_angle = -30.15 # 回転角度
 center_x, center_y = (x + x + new_width) / 2 + + x_shift, (y + y + new_height) / 2 + y_shift# クロップ後の中心の座標
 
 cropped_image = crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
+cropped_mask_img = crop_2(mask_img, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
 
-cropped_image = cropped_image.resize((800, 800))
+
 
 save(cropped_image, data_path, output_name)
+save(cropped_mask_img, data_path, output_name_mask)
 
 #HDR用
 save(cropped_image, "./hdr/", output_name)
+save(cropped_mask_img, "./hdr/", output_name_mask)
 
 
 
