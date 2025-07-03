@@ -138,20 +138,24 @@ def save(image_array, data_path, output_name):
     img.save(data_path + output_name)
 
 # データパスとファイル名の設定
-data_path = "./data/"
+data_path = "./edit/"
 input_name_1 = 'cropped_image_1.jpg'
 input_name_2 = 'cropped_image_2.jpg'
+input_name_3 = 'cropped_image_3.jpg'
 
 output_name_1 = "log_polar_1.jpg"
 output_name_2 = "log_polar_2.jpg"
+output_name_3 = "log_polar_3.jpg"
 
 # 画像を読み込み
 input_image_1 = Image.open(data_path + input_name_1).convert("L")
 input_image_2 = Image.open(data_path + input_name_2).convert("L")
+input_image_3 = Image.open(data_path + input_name_3).convert("L")
 
 # numpy配列へ変換
 image_array_1 = np.array(input_image_1)
 image_array_2 = np.array(input_image_2)
+image_array_3 = np.array(input_image_3)
 
 # サイズ，中心を測る
 source_width, source_height, center_x, center_y = size(image_array_1)
@@ -159,28 +163,41 @@ source_width, source_height, center_x, center_y = size(image_array_1)
 # 振幅スペクトルへ変換
 magnitude_1, magnitude_shifted_1, magnitude_image_1, magnitude_shifted_image_1 = magnitude(image_array_1)
 magnitude_2, magnitude_shifted_2, magnitude_image_2, magnitude_shifted_image_2 = magnitude(image_array_2)
+magnitude_3, magnitude_shifted_3, magnitude_image_3, magnitude_shifted_image_3 = magnitude(image_array_3)
 
 
 # 振幅スペクトルの画像として保存
 save(magnitude_image_1, data_path, "magnitude_1.jpg")
 save(magnitude_image_2, data_path, "magnitude_2.jpg")
+save(magnitude_image_3, data_path, "magnitude_3.jpg")
 save(magnitude_shifted_image_1, data_path, "magnitude_shifted_1.jpg")
 save(magnitude_shifted_image_2, data_path, "magnitude_shifted_2.jpg")
+save(magnitude_shifted_image_3, data_path, "magnitude_shifted_3.jpg")
 
 # 対数極座標へ変換
 transformed_array_1 = log_polar_transform(magnitude_shifted_1, center_x, center_y, source_height, source_width)
 transformed_array_2 = log_polar_transform(magnitude_shifted_2, center_x, center_y, source_height, source_width)
+transformed_array_3 = log_polar_transform(magnitude_shifted_3, center_x, center_y, source_height, source_width)
 
 transformed_image_1 = log_polar_transform(magnitude_shifted_image_1, center_x, center_y, source_height, source_width)
 transformed_image_2 = log_polar_transform(magnitude_shifted_image_2, center_x, center_y, source_height, source_width)
+transformed_image_3 = log_polar_transform(magnitude_shifted_image_3, center_x, center_y, source_height, source_width)
 
 save(transformed_image_1, data_path, "log_polar_magnitude_1.jpg")
 save(transformed_image_2, data_path, "log_polar_magnitude_2.jpg")
+save(transformed_image_3, data_path, "log_polar_magnitude_3.jpg")
 
 
-# シフト量の推定
+# シフト量の推定1-2
 shift_x, shift_y = cross_power(transformed_array_1, transformed_array_2)
 scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
 print(f"Scale factor (2 に対して): {round(scale_factor, 3)}")
 print(f"Rotation angle (2 に対して): {round(rotation_angle, 3)} degrees")
+
+# シフト量の推定1-3
+shift_x, shift_y = cross_power(transformed_array_1, transformed_array_3)
+scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
+
+print(f"Scale factor (3 に対して): {round(scale_factor, 3)}")
+print(f"Rotation angle (3 に対して): {round(rotation_angle, 3)} degrees")

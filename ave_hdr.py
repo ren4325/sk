@@ -8,9 +8,20 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 # 画像融合の関数
-def image_fusion(image_list, c=100000, sigma=25):
+def image_fusion(image_list, mask_list, c=100000, sigma=25):
+    # まずマスクで補完画像を作る
+    completed_images = []
+
+    for i, mask in enumerate(mask_list):
+        mask_arr = np.array(mask)
+        valid_mask = (np.all(mask_arr > 128, axis=-1)).astype(np.float32)[..., None]
+        # 白部分はimage[i] + 黒部分はimage[0]の画像を作る
+        completed = image_list[i] * valid_mask + image_list[0] * (1 - valid_mask)
+        completed_images.append(np.clip(completed, 0, 255).astype(np.float32))
+
+    # 補完済み画像でHDR合成
     T_list = []
-    for image in image_list:
+    for image in completed_images:
         data = np.array(image).astype(np.float32)
         T = np.fft.fft2(data, axes=(0, 1))
         T_list.append(T)
@@ -20,16 +31,10 @@ def image_fusion(image_list, c=100000, sigma=25):
     T_filter_list = [T + A * D for T, A, D in zip(T_list, A_list, D_list)]
 
     fused_T = sum(T_filter_list) / len(T_filter_list)
-    fused_img = np.abs(np.fft.ifft2(fused_T, axes=(0, 1))).astype(np.float32)
-
-    mask = './hdr/mask_image.jpg'
-    mask_arr = np.array(Image.open(mask))
-
-    valid_mask = (np.all(mask_arr > 128, axis=-1)).astype(np.float32)[..., None]  # shape: (H, W, 1)
-
-    output = fused_img * valid_mask + image_list[0] * (1 - valid_mask)
+    output = np.abs(np.fft.ifft2(fused_T, axes=(0, 1))).astype(np.float32)
 
     return np.clip(output, 0, 255)
+
 
 
 # 平均化による画像融合
@@ -40,7 +45,7 @@ def average_fusion(image_array):
 
 # 並列処理用のブロック融合関数
 def process_block(params):
-    i, j, block_size, overlap, h, w, image_list, fusion_method = params
+    i, j, block_size, overlap, h, w, image_list, mask_list, fusion_method = params
     stride_y = block_size[0] - overlap[0]
     stride_x = block_size[1] - overlap[1]
 
@@ -51,13 +56,17 @@ def process_block(params):
     # 各ブロックを取得
     block_list = [img[i:y_end, j:x_end, :] for img in image_list]
 
-    # ブロックごとの融合
-    fused_block = fusion_method(block_list)
+    # ブロックごとの融合(image_fusionかaverage_fusion)
+    if fusion_method == image_fusion:
+        fused_block = fusion_method(block_list, mask_list)
+    else:
+        fused_block = fusion_method(block_list)
+
 
     return i, j, y_end, x_end, fused_block
 
 # 並列処理を使用したブロック融合
-def fuse_blocks_parallel(image_list, block_size=(4000, 6000), overlap=(20, 20), fusion_method=image_fusion):
+def fuse_blocks_parallel(image_list, mask_list=None, block_size=(4000, 6000), overlap=(20, 20), fusion_method=image_fusion):
     if len(image_list) < 1:
         raise ValueError("画像リストが空です.")
 
@@ -71,7 +80,7 @@ def fuse_blocks_parallel(image_list, block_size=(4000, 6000), overlap=(20, 20), 
     tasks = []
     for i in range(0, h, stride_y):
         for j in range(0, w, stride_x):
-            tasks.append((i, j, block_size, overlap, h, w, image_list, fusion_method))
+            tasks.append((i, j, block_size, overlap, h, w, image_list, mask_list, fusion_method))
 
     with ThreadPoolExecutor() as executor:
         results = executor.map(process_block, tasks)
@@ -106,20 +115,36 @@ start_time = time.time()
 
 # 画像ファイルのパスを指定する
 image_files = [
-    './hdr/cropped_image_1.jpg',   # 補完元（image_list[0]）
-    './hdr/filtered_image_1.jpg'   # 欠損あり（image_list[1]）
+    os.path.join('./hdr', f)
+    for f in os.listdir('./hdr')
+    if f.endswith('.jpg')
 ]
+
+
+mask_files = [
+    os.path.join('./mask', f)
+    for f in os.listdir('./mask')
+    if f.endswith('.jpg')
+]
+
 # 入力画像の枚数を表示
 print(f"入力画像の枚数: {len(image_files)}")
+print(f"入力マスク画像の枚数: {len(mask_files)}")
 
 # 画像を読み込む
 image_list = [Image.open(f) for f in image_files]
-    
+mask_list = [Image.open(f) for f in mask_files]
+
 # 画像をテンソルに変換
 original_frames = torch.stack([torch.tensor(np.array(img)) for img in image_list])
+# マスクもnumpyで用意（マスクは画像処理に使うのでテンソルにする必要なし）
+
+mask_arrays = [np.array(mask) for mask in mask_list]
+
+
 
 # フレームの融合（並列処理）
-fused_blocks = [fuse_blocks_parallel([img.numpy() for img in original_frames], fusion_method=image_fusion)]
+fused_blocks = [fuse_blocks_parallel([img.numpy() for img in original_frames], mask_list=mask_arrays, fusion_method=image_fusion)]
 average_image = [fuse_blocks_parallel([img.numpy() for img in original_frames], fusion_method=average_fusion)]
 
 
