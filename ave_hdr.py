@@ -127,6 +127,10 @@ mask_files = [
     if f.endswith('.jpg')
 ]
 
+image_files = sorted(image_files)
+mask_files = sorted(mask_files)
+
+
 # 入力画像の枚数を表示
 print(f"入力画像の枚数: {len(image_files)}")
 print(f"入力マスク画像の枚数: {len(mask_files)}")
