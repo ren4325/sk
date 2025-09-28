@@ -142,17 +142,40 @@ def save(image_array, data_path, output_name):
 input_path = "./edit/"
 output_path = "./edit_2/"
 
-for i in input_path:
-    input_images = os.listdir(input_path)
-    num_images = len(input_images)
+#基準画像の指定(枚目-1)
+base_image = 0
+
+# フォルダ内のファイル一覧を取得してソート
+input_images = sorted(os.listdir(input_path))  
+num_images = len(input_images)
+
+##基準画像##
+
+# 画像を読み込み
+input_image = Image.open(os.path.join(input_path, input_images[base_image])).convert("L")
+
+# numpy配列へ変換
+image_array = np.array(input_image)
+
+# サイズ，中心を測る
+source_width, source_height, center_x, center_y = size(image_array)
+
+# 振幅スペクトルへ変換
+magnitude_1, magnitude_shifted_1, magnitude_image_1, magnitude_shifted_image_1 = magnitude(image_array)
+
+# 対数極座標へ変換
+transformed_array = log_polar_transform(magnitude_shifted_1, center_x, center_y, source_height, source_width)
+
+transformed_image = log_polar_transform(magnitude_shifted_image_1, center_x, center_y, source_height, source_width)
 
 
-for i in range(1, num_images+1):
-    input_image_name = f"cropped_image_{i}.jpg"
-    print(f"{i}[枚目の画像" + f"({input_image_name})")
+transformed_array_base = transformed_array
 
+##全画像##
+
+for i, input_image_name in enumerate(input_images, start=1):
     # 画像を読み込み
-    input_image = Image.open(input_path + input_image_name).convert("L")
+    input_image = Image.open(os.path.join(input_path, input_image_name)).convert("L")
 
     # numpy配列へ変換
     image_array = np.array(input_image)
@@ -174,12 +197,12 @@ for i in range(1, num_images+1):
 
     save(transformed_image, output_path, f"log_polar_magnitude_{i}.jpg")
 
-    if i == 1:
-        transformed_array_1 = transformed_array
 
-    # シフト量の推定1
-    shift_x, shift_y = cross_power(transformed_array_1, transformed_array)
+# シフト量の推定1
+
+    print(f"{i}枚目の画像 ({input_image_name})")
+    shift_x, shift_y = cross_power(transformed_array_base, transformed_array)
     scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
-    print(f"Scale factor (cropped_image_1に対して): {round(scale_factor, 3)}")
-    print(f"Rotation angle (cropped_image_1対して): {round(rotation_angle, 3)} degrees")
+    print(f"Scale factor (cropped_image_{base_image}に対して): {round(scale_factor, 3)}")
+    print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")

@@ -31,29 +31,28 @@ def save(cropped_image, data_path, output_name):
     cropped_image.save(data_path + output_name)
 
 # 白画像の作成
-mask_img = Image.new("RGB", (800, 800), "white")
+mask_img = Image.new("RGB", (3024, 3024), "white")
 
 # データパスの指定
 input_path = "./edit/"
 output_path = "./hdr/"
 mask_path =  "./mask/"
 
-for i in input_path:
-    input_images = os.listdir(input_path)
-    num_images = len(input_images)
+# フォルダ内のファイル一覧を取得（画像だけ残してソート）
+input_images = sorted(
+    f for f in os.listdir(input_path)
+)
+num_images = len(input_images)
 
-for i in range(1, num_images+1):
-
-    input_image_name = f"cropped_image_{i}.jpg"
-    print(f"{i}[枚目の画像" + f"({input_image_name})")
-
+for i, input_image_name in enumerate(input_images, start=1):
+    print(f"{i}[枚目の画像({input_image_name})")
     image = read(input_path, input_image_name)
 
     # 元画像のサイズ
     original_width, original_height = image.size
 
     # 新しい画像の幅と高さ
-    new_width, new_height = 800, 800
+    new_width, new_height = 2000, 2000
 
     # 画像の左上の座標
     x, y = 0, 0
