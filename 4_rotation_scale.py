@@ -86,7 +86,7 @@ for i, input_image_name in enumerate(input_images, start=1):
     original_width, original_height = image.size
 
     # 新しい画像の幅と高さ
-    new_width, new_height = 2000, 2000
+    new_width, new_height = image.size
 
     # 画像の左上の座標
     x, y = 0, 0
