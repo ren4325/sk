@@ -2,6 +2,7 @@ from PIL import Image
 import os
 import numpy as np
 import scipy.signal
+import csv
 from scipy.ndimage import map_coordinates
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
@@ -144,10 +145,13 @@ output_path = "./edit_2/"
 
 #基準画像の指定(枚目-1)
 base_image = 0
+print(f"基準画像:{base_image + 1}枚目")
+
+#csvファイル用のリスト
+estimated_value = []
 
 # フォルダ内のファイル一覧を取得してソート
 input_images = sorted(os.listdir(input_path))  
-num_images = len(input_images)
 
 ##基準画像##
 
@@ -198,11 +202,25 @@ for i, input_image_name in enumerate(input_images, start=1):
     save(transformed_image, output_path, f"log_polar_magnitude_{i}.jpg")
 
 
-# シフト量の推定1
-
+    # シフト量の推定1
     print(f"{i}枚目の画像 ({input_image_name})")
     shift_x, shift_y = cross_power(transformed_array_base, transformed_array)
     scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
     print(f"Scale factor (cropped_image_{base_image}に対して): {round(scale_factor, 3)}")
     print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")
+
+    #csvファイル用
+    estimated_value.append([input_image_name, i, shift_x, shift_y, scale_factor, rotation_angle])
+
+
+#CSVファイルの書き込み
+with open("estimated_value.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    # 1行目：base_image
+    w.writerow(["base_image", base_image])
+    # 2行目：ヘッダー
+    w.writerow(["filename", "index", "shift_x", "shift_y", "scale_factor", "rotation_angle"])
+    # 3行目以降推定値
+    w.writerows(estimated_value)
+print("推定結果を estimated_value.csv に保存しました")
