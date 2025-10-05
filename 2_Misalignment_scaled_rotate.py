@@ -46,29 +46,22 @@ image = read(data_path, input_name)
 
 original_width, original_height = image.size # 元画像のサイズ
 
-new_width, new_height = 800, 800  # 新しい画像の幅と高さ
+new_width, new_height = original_width, original_height  # 新しい画像の幅と高さ
 
-x, y = 700, 900  # 画像の左上の座標
-
-x_shift_2, y_shift_2 = 0, 0
-scale_factor_2 =1.5  # 拡大・縮小倍率
-rotation_angle_2 = 30  # 回転角度
-
-x_shift_3, y_shift_3 = 0, 0
-scale_factor_3 =2.0  # 拡大・縮小倍率
-rotation_angle_3 = 15  # 回転角度
+x, y = 0, 0  # 画像の左上の座標
 
 cropped_image_1 = crop_1(x, y, new_width , new_height, image)
-cropped_image_2 = crop_2(image, original_width, original_height, new_width, new_height, scale_factor_2, rotation_angle_2, x, y, x_shift_2, y_shift_2)
-cropped_image_3 = crop_2(image, original_width, original_height, new_width, new_height, scale_factor_3, rotation_angle_3, x, y, x_shift_3, y_shift_3)
 
 save(cropped_image_1, op_data_path, output_name_1)
-save(cropped_image_2, op_data_path, output_name_2)
-save(cropped_image_3, op_data_path, output_name_3)
 
-#基準画像をhdrフォルダに保存
-save(cropped_image_1, "./hdr/", "0_base_image.jpg")
-print("基準画像を 0_base_image.jpg として保存しました。")
+for i in range(2, 11) :
+    x_shift, y_shift = 0, 0
+    scale_factor = 1 + i / 7  # 拡大・縮小倍率
+    rotation_angle = 3 * i  # 回転角度
+
+    cropped_image_2 = crop_2(image, original_width, original_height, new_width, new_height, scale_factor, rotation_angle, x, y, x_shift, y_shift)
+
+    save(cropped_image_2, op_data_path, f"cropped_image_{i}.jpg")
 
 
 

@@ -153,29 +153,10 @@ estimated_value = []
 # フォルダ内のファイル一覧を取得してソート
 input_images = sorted(os.listdir(input_path))  
 
-##基準画像##
+# 全画像の変換結果を保存するリスト
+all_transformed_arrays = []
+all_magnitudes = []
 
-# 画像を読み込み
-input_image = Image.open(os.path.join(input_path, input_images[base_image])).convert("L")
-
-# numpy配列へ変換
-image_array = np.array(input_image)
-
-# サイズ，中心を測る
-source_width, source_height, center_x, center_y = size(image_array)
-
-# 振幅スペクトルへ変換
-magnitude_1, magnitude_shifted_1, magnitude_image_1, magnitude_shifted_image_1 = magnitude(image_array)
-
-# 対数極座標へ変換
-transformed_array = log_polar_transform(magnitude_shifted_1, center_x, center_y, source_height, source_width)
-
-transformed_image = log_polar_transform(magnitude_shifted_image_1, center_x, center_y, source_height, source_width)
-
-
-transformed_array_base = transformed_array
-
-##全画像##
 
 for i, input_image_name in enumerate(input_images, start=1):
     # 画像を読み込み
@@ -201,10 +182,14 @@ for i, input_image_name in enumerate(input_images, start=1):
 
     save(transformed_image, output_path, f"log_polar_magnitude_{i}.jpg")
 
+    all_transformed_arrays.append(transformed_array)
+    all_magnitudes.append((magnitude_1, center_x, center_y))
 
     # シフト量の推定1
+for i, input_image_name in enumerate(input_images, start=1):
     print(f"{i}枚目の画像 ({input_image_name})")
-    shift_x, shift_y = cross_power(transformed_array_base, transformed_array)
+    shift_x, shift_y = cross_power(all_transformed_arrays[base_image], all_transformed_arrays[i-1])
+    magnitude_1, center_x, center_y = all_magnitudes[i-1]
     scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
     print(f"Scale factor (cropped_image_{base_image}に対して): {round(scale_factor, 3)}")
