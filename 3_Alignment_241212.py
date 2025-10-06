@@ -208,7 +208,8 @@ for i in range(len(input_images)):
         magnitude_1, center_x, center_y = all_magnitudes[g_index-1]
         scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
-        print(f"  {g_name} -> shift=({shift_x},{shift_y}), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
+        print(f"  {g_name} -> shift=(0, 0), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
+        #print(f"  {g_name} -> shift=({shift_x},{shift_y}), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
 
         # set番号と基準画像も一緒に保存
         estimated_value.append([
@@ -216,7 +217,8 @@ for i in range(len(input_images)):
             base_name,     # 基準画像
             g_name,        # ファイル名
             g_index,       # インデックス
-            shift_x, shift_y,
+            0, 0,
+            #shift_x, shift_y,
             scale_factor, rotation_angle
         ])
 
@@ -230,7 +232,8 @@ for i in range(len(input_images)):
     #print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")
 
     #csvファイル用
-    estimated_value.append([input_image_name, i, shift_x, shift_y, scale_factor, rotation_angle])
+    estimated_value.append([input_image_name, i, 0, 0, scale_factor, rotation_angle])
+    #estimated_value.append([input_image_name, i, shift_x, shift_y, scale_factor, rotation_angle])
 
 
 #CSVファイルの書き込み

@@ -108,8 +108,8 @@ for i, input_image_name in enumerate(input_images, start=1):
         # クロップ後の中心の座標
         center_x, center_y = (x + x + new_width) / 2 + + x_shift, (y + y + new_height) / 2 + y_shift
 
-        cropped_image = crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
-        cropped_mask_img = crop_2(mask_img, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
+        cropped_image = crop_2(image, original_width, original_height, center_x, center_y, 1/scale_factor, rotation_angle, x_shift, y_shift)
+        cropped_mask_img = crop_2(mask_img, original_width, original_height, center_x, center_y, 1/scale_factor, rotation_angle, x_shift, y_shift)
 
         save(cropped_image, set_folder, f"{g_idx}_{g_name}_filtered.jpg")
         save(cropped_mask_img, mask_folder, f"{g_idx}_{g_name}_mask.jpg")
