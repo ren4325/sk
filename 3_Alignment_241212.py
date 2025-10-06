@@ -143,9 +143,8 @@ def save(image_array, data_path, output_name):
 input_path = "./edit/"
 output_path = "./edit_2/"
 
-#基準画像の指定(枚目-1)
+# 基準画像の指定(0:真ん中)
 base_image = 0
-print(f"基準画像:{base_image + 1}枚目")
 
 #csvファイル用のリスト
 estimated_value = []
@@ -185,15 +184,50 @@ for i, input_image_name in enumerate(input_images, start=1):
     all_transformed_arrays.append(transformed_array)
     all_magnitudes.append((magnitude_1, center_x, center_y))
 
-    # シフト量の推定1
-for i, input_image_name in enumerate(input_images, start=1):
-    print(f"{i}枚目の画像 ({input_image_name})")
-    shift_x, shift_y = cross_power(all_transformed_arrays[base_image], all_transformed_arrays[i-1])
-    magnitude_1, center_x, center_y = all_magnitudes[i-1]
-    scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
+    #グループ化
+    hdr_range = 3  # グループ幅
+    estimated_value = []  # CSVにそのまま流すリスト
 
-    print(f"Scale factor (cropped_image_{base_image}に対して): {round(scale_factor, 3)}")
-    print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")
+for i in range(len(input_images)):
+    # グループ範囲
+    start = max(0, i - hdr_range//2)
+    end   = min(len(input_images), i + hdr_range//2 + 1)
+    group = input_images[start:end]
+
+    # 基準画像（真ん中）
+    base_idx = i
+    base_name = input_images[base_idx]
+
+    print(f"Set {i+1}: 基準画像 = {base_name}, グループ = {group}")
+
+    # シフト量の推定1
+
+    for g_name in group:
+        g_index = input_images.index(g_name) + 1
+        shift_x, shift_y = cross_power(all_transformed_arrays[base_idx], all_transformed_arrays[g_index-1])
+        magnitude_1, center_x, center_y = all_magnitudes[g_index-1]
+        scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
+
+        print(f"  {g_name} -> shift=({shift_x},{shift_y}), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
+
+        # set番号と基準画像も一緒に保存
+        estimated_value.append([
+            i+1,           # set番号
+            base_name,     # 基準画像
+            g_name,        # ファイル名
+            g_index,       # インデックス
+            shift_x, shift_y,
+            scale_factor, rotation_angle
+        ])
+
+#for i, input_image_name in enumerate(input_images, start=1):
+    #print(f"{i}枚目の画像 ({input_image_name})")
+    #shift_x, shift_y = cross_power(all_transformed_arrays[base_image], all_transformed_arrays[i-1])
+    #magnitude_1, center_x, center_y = all_magnitudes[i-1]
+    #scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
+
+    #print(f"Scale factor (cropped_image_{base_image}に対して): {round(scale_factor, 3)}")
+    #print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")
 
     #csvファイル用
     estimated_value.append([input_image_name, i, shift_x, shift_y, scale_factor, rotation_angle])
@@ -205,7 +239,7 @@ with open("estimated_value.csv", "w", newline="", encoding="utf-8") as f:
     # 1行目：base_image
     w.writerow(["base_image", base_image])
     # 2行目：ヘッダー
-    w.writerow(["filename", "index", "shift_x", "shift_y", "scale_factor", "rotation_angle"])
+    w.writerow(["set", "base_image", "filename", "index", "shift_x", "shift_y", "scale_factor", "rotation_angle"])
     # 3行目以降推定値
     w.writerows(estimated_value)
 print("推定結果を estimated_value.csv に保存しました")

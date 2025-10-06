@@ -38,7 +38,7 @@ def save(cropped_image, data_path, output_name):
 data_path = "./data/"
 op_data_path = "./edit/"
 input_name = "sample.jpg"
-output_name_1 = "cropped_image_1.jpg"
+output_name_1 = "cropped_image_0001.jpg"
 output_name_2 = "cropped_image_2.jpg"
 output_name_3 = "cropped_image_3.jpg"
 
@@ -61,7 +61,7 @@ for i in range(2, 11) :
 
     cropped_image_2 = crop_2(image, original_width, original_height, new_width, new_height, scale_factor, rotation_angle, x, y, x_shift, y_shift)
 
-    save(cropped_image_2, op_data_path, f"cropped_image_{i}.jpg")
+    save(cropped_image_2, op_data_path, f"cropped_image_{str(i).zfill(4)}.jpg")
 
 
 

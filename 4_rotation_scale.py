@@ -16,20 +16,15 @@ def load_csv_params(csv_path="estimated_value.csv"):
     with open(csv_path, newline="", encoding="utf-8") as f:
         estimated_value = list(csv.reader(f))
 
-    # 1行目: ["base_image", "<数値>"]
-    if len(estimated_value[0]) >= 2 and estimated_value[0][0] == "base_image":
-        base_image = int(estimated_value[0][1])
-    else:
-        print("base_imageがありません")
-
     # 2行目:ヘッダー想定 3行目以降:データ
     for row in estimated_value[2:]:
-        if len(row) < 6:
+        if len(row) < 8:
             continue
 
-        filename, index, sx, sy, s, rot = row
+        set_num, base_name, filename, index, sx, sy, s, rot = row
         
-        params[filename] = {
+        params[(int(set_num), filename)] = {
+            "base_name": base_name,
             "index": int(index),
             "shift_x": float(sx),
             "shift_y": float(sy),
@@ -37,11 +32,10 @@ def load_csv_params(csv_path="estimated_value.csv"):
             "rotation_angle": float(rot),
         }
 
-    return base_image, params
+    return params
 
 
 def crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift ):
-    #rotated_image = image.rotate(rotation_angle, center=(center_x, center_y)) #回転
     
     new_size = (int(original_width * scale_factor), int(original_height * scale_factor))
     scaled_image = image.resize(new_size) #拡縮
@@ -60,7 +54,8 @@ def crop_2(image, original_width, original_height, center_x, center_y, scale_fac
     return cropped_image
 
 def save(cropped_image, data_path, output_name):
-    cropped_image.save(data_path + output_name)
+    save_path = os.path.join(data_path, output_name)
+    cropped_image.save(save_path)
 
 # 白画像の作成
 mask_img = Image.new("RGB", (3024, 3024), "white")
@@ -70,41 +65,53 @@ input_path = "./edit/"
 output_path = "./hdr/"
 mask_path =  "./mask/"
 
+# 処理の分割の指定
+hdr_range = 3
+
 # フォルダ内のファイル一覧を取得（画像だけ残してソート）
 input_images = sorted(os.listdir(input_path))  
 
 #csvファイルの読み込み
-csv_base_image, csv_params = load_csv_params("estimated_value.csv")
-print(f"基準画像:{csv_base_image + 1}枚目")
+csv_params = load_csv_params("estimated_value.csv")
 
 
 for i, input_image_name in enumerate(input_images, start=1):
-    print(f"{i}[枚目の画像({input_image_name})")
-    image = read(input_path, input_image_name)
+    
+    # グループ決定
+    start = max(1, i - hdr_range//2)
+    end = min(len(input_images), i + hdr_range//2)
+    group = input_images[start-1:end]
 
-    # 元画像のサイズ
-    original_width, original_height = image.size
+    # フォルダ作成
+    set_folder = os.path.join(output_path, f"hdr_set_{str(i).zfill(4)}")
+    mask_folder = os.path.join(mask_path, f"mask_set_{str(i).zfill(4)}")
+    os.makedirs(set_folder, exist_ok=True)
+    os.makedirs(mask_folder, exist_ok=True)
 
-    # 新しい画像の幅と高さ
-    new_width, new_height = image.size
+    for g_idx, g_name in enumerate(group, start=1):
+        image = read(input_path, g_name)
+        original_width, original_height = image.size
+        new_width, new_height = original_width, original_height
+        x, y = 0, 0
 
-    # 画像の左上の座標
-    x, y = 0, 0
 
-    p = csv_params[input_image_name]
-    scale_factor   = p["scale_factor"]
-    rotation_angle = p["rotation_angle"]
-    x_shift = 0
-    y_shift = 0
-    print(f"CSVファイルの値を適用しました: scale={scale_factor}, rot={rotation_angle}°")
+        # CSVからset番号をキーにして取り出す
+        p = csv_params[(i, g_name)]
+        scale_factor   = p["scale_factor"]
+        rotation_angle = p["rotation_angle"]
+        x_shift = p["shift_x"]
+        y_shift = p["shift_y"]
 
-    # クロップ後の中心の座標
-    center_x, center_y = (x + x + new_width) / 2 + + x_shift, (y + y + new_height) / 2 + y_shift
+        print(f"CSVファイルの値を適用: set={i}, file={g_name}, scale={scale_factor}, rot={rotation_angle}°")
 
-    cropped_image_1 = crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
-    cropped_mask_img_1 = crop_2(mask_img, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
 
-    save(cropped_image_1, "./hdr/", f"{i}_filtered_image.jpg")
-    print(f"画像の一部を切り抜いて {i}_filtered_image.jpg として保存しました。")
-    save(cropped_mask_img_1, "./mask/", f"{i}_mask_image.jpg")
-    print(f"白い画像に{i}_filtered_image.jpgと同様の変換をして、 {i}_mask_image.jpg として保存しました。")
+        # クロップ後の中心の座標
+        center_x, center_y = (x + x + new_width) / 2 + + x_shift, (y + y + new_height) / 2 + y_shift
+
+        cropped_image = crop_2(image, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
+        cropped_mask_img = crop_2(mask_img, original_width, original_height, center_x, center_y, scale_factor, rotation_angle, x_shift, y_shift)
+
+        save(cropped_image, set_folder, f"{g_idx}_{g_name}_filtered.jpg")
+        save(cropped_mask_img, mask_folder, f"{g_idx}_{g_name}_mask.jpg")
+    
+print(f"hdr_set_{i} を作成")

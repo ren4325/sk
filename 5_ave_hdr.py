@@ -113,44 +113,62 @@ def save_images(images, folder_path, prefix):
 # 実行時間計測開始
 start_time = time.time()
 
-# 画像ファイルのパスを指定する
-image_files = [
-    os.path.join('./hdr', f)
-    for f in os.listdir('./hdr')
-    if f.endswith('.jpg')
-]
+# 出力フォルダ作成
+results_hdr_path = os.path.join("results", "hdr")
+results_avg_path = os.path.join("results", "average")
+os.makedirs(results_hdr_path, exist_ok=True)
+os.makedirs(results_avg_path, exist_ok=True)
+
+# --- セットごとに処理 ---
+hdr_sets = sorted([f for f in os.listdir('./hdr') if f.startswith('hdr_set_')])
+mask_sets = sorted([f for f in os.listdir('./mask') if f.startswith('mask_set_')])
+
+for set_idx, (hdr_set, mask_set) in enumerate(zip(hdr_sets, mask_sets), start=1):
+
+    # 画像ファイルのパスを指定する
+    image_files = [
+        os.path.join('./hdr', hdr_set, f)
+        for f in os.listdir(os.path.join('./hdr', hdr_set))
+        if f.endswith('.jpg')
+    ]
+
+    mask_files = [
+        os.path.join('./mask', mask_set, f)
+        for f in os.listdir(os.path.join('./mask', mask_set))
+        if f.endswith('.jpg')
+    ]
+
+    image_files = sorted(image_files)
+    mask_files = sorted(mask_files)
+
+    if set_idx == 1:
+        base_image = 0
+    else:
+        base_image = 1
 
 
-mask_files = [
-    os.path.join('./mask', f)
-    for f in os.listdir('./mask')
-    if f.endswith('.jpg')
-]
+    print(f"[Set {set_idx}] 入力画像の枚数: {len(image_files)}")
+    print(f"[Set {set_idx}] 入力マスク画像の枚数: {len(mask_files)}")
 
-image_files = sorted(image_files)
-mask_files = sorted(mask_files)
+    # 画像を読み込む
+    image_list = [Image.open(f) for f in image_files]
+    mask_list = [Image.open(f) for f in mask_files]
 
-base_image = 0
+    # 画像をテンソルに変換
+    original_frames = torch.stack([torch.tensor(np.array(img)) for img in image_list])
+    mask_arrays = [np.array(mask) for mask in mask_list]
 
-# 入力画像の枚数を表示
-print(f"入力画像の枚数: {len(image_files)}")
-print(f"入力マスク画像の枚数: {len(mask_files)}")
+    # フレームの融合（並列処理）
+    fused_blocks = [fuse_blocks_parallel([img.numpy() for img in original_frames],
+                                         mask_list=mask_arrays,
+                                         fusion_method=image_fusion,
+                                         base_image= base_image)]
+    average_image = [fuse_blocks_parallel([img.numpy() for img in original_frames],
+                                          fusion_method=average_fusion)]
 
-# 画像を読み込む
-image_list = [Image.open(f) for f in image_files]
-mask_list = [Image.open(f) for f in mask_files]
-
-# 画像をテンソルに変換
-original_frames = torch.stack([torch.tensor(np.array(img)) for img in image_list])
-# マスクもnumpyで用意（マスクは画像処理に使うのでテンソルにする必要なし）
-
-mask_arrays = [np.array(mask) for mask in mask_list]
-
-
-
-# フレームの融合（並列処理）
-fused_blocks = [fuse_blocks_parallel([img.numpy() for img in original_frames], mask_list=mask_arrays, fusion_method=image_fusion, base_image = base_image)]
-average_image = [fuse_blocks_parallel([img.numpy() for img in original_frames], fusion_method=average_fusion)]
+    # 保存処理（セットごとに出力）
+    save_images(fused_blocks, results_hdr_path, f"fused_blocks_set_{str(set_idx).zfill(4)}")
+    save_images(average_image, results_avg_path, f"average_image_set_{str(set_idx).zfill(4)}")
 
 
 # 保存処理
