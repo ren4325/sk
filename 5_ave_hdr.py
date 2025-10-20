@@ -172,8 +172,8 @@ for set_idx, (hdr_set, mask_set) in enumerate(zip(hdr_sets, mask_sets), start=1)
 
 
 # 保存処理
-save_images(fused_blocks, 'results', 'fused_blocks')
-save_images(average_image, 'results', 'average_image')
+#save_images(fused_blocks, 'results', 'fused_blocks')
+#save_images(average_image, 'results', 'average_image')
 
 
 end_time = time.time()
