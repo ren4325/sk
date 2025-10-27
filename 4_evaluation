@@ -5,10 +5,10 @@ import os
 
 # 画像読み込み（グレースケール）
 def load_image(path):
-    img = Image.open(path).convert("L")  # グレースケール
+    img = Image.open(path).convert("L") 
     return np.array(img)
 
-# PSNRを計算する関数
+# PSNR
 def calculate_psnr(img1, img2):
     diff = img1.astype(np.float64) - img2.astype(np.float64)
     mse = np.mean(diff ** 2)
@@ -16,13 +16,13 @@ def calculate_psnr(img1, img2):
         return float('inf')
     return 10 * np.log10((255.0 ** 2) / mse)
 
-# SSIMを計算する関数
+# SSIM
 def calculate_ssim(img1, img2):
     score, _ = ssim(img1, img2, full=True, data_range=255)
     return score
 
-# プロジェクト構造に合わせた評価
-def evaluate_from_project_structure():
+# 評価
+def evaluation():
     base_path = os.path.join("before", f"cropped_image_0001.jpg")
     edit_path = os.path.join("edit", f"cropped_image_0001.jpg")
     avg_path  = os.path.join("results", "average", f"average_image_set_0001_frame_0.png")
@@ -30,7 +30,7 @@ def evaluate_from_project_structure():
 
     base = load_image(base_path)
     targets = [
-        ("edit", edit_path),
+        ("ノイズ画像", edit_path),
         ("average", avg_path),
         ("hdr", hdr_path),
     ]
@@ -51,4 +51,4 @@ def evaluate_from_project_structure():
 
 # --- 実行例 ---
 if __name__ == "__main__":
-    evaluate_from_project_structure()
+    evaluation()

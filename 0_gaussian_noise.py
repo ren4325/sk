@@ -4,7 +4,7 @@ import os
 
 # 入出力フォルダ
 input_path = "./before/"
-output_path = "./after/"
+output_path = "./edit/"
 os.makedirs(output_path, exist_ok=True)
 
 # フォルダ内の画像を処理
@@ -16,8 +16,8 @@ for file in os.listdir(input_path):
     img = Image.open(os.path.join(input_path, file)).convert("RGB")
     arr = np.array(img, dtype=np.float32)
 
-    # ガウスノイズを生成（平均0, 標準偏差25くらい）
-    noise = np.random.normal(0, 10, arr.shape)
+    # ガウスノイズを生成（平均, 標準偏差）
+    noise = np.random.normal(0, 45, arr.shape)
 
     # 画像にノイズを足してクリップ
     noisy_arr = np.clip(arr + noise, 0, 255).astype(np.uint8)
