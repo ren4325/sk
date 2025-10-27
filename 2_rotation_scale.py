@@ -66,7 +66,7 @@ output_path = "./hdr/"
 mask_path =  "./mask/"
 
 # 処理の分割の指定
-hdr_range = 3
+hdr_range = 5
 
 # フォルダ内のファイル一覧を取得（画像だけ残してソート）
 input_images = sorted(os.listdir(input_path))  

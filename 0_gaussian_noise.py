@@ -17,7 +17,7 @@ for file in os.listdir(input_path):
     arr = np.array(img, dtype=np.float32)
 
     # ガウスノイズを生成（平均, 標準偏差）
-    noise = np.random.normal(0, 45, arr.shape)
+    noise = np.random.normal(0, 0, arr.shape)
 
     # 画像にノイズを足してクリップ
     noisy_arr = np.clip(arr + noise, 0, 255).astype(np.uint8)

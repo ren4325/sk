@@ -185,7 +185,7 @@ for i, input_image_name in enumerate(input_images, start=1):
     all_magnitudes.append((magnitude_1, center_x, center_y))
 
     #グループ化
-    hdr_range = 3  # グループ幅
+    hdr_range = 5  # グループ幅
     estimated_value = []  # CSVにそのまま流すリスト
 
 for i in range(len(input_images)):
