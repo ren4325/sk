@@ -31,7 +31,7 @@ def image_fusion(image_list, mask_list, base_image, c=100000, sigma=25):
     T_filter_list = [T + A * D for T, A, D in zip(T_list, A_list, D_list)]
 
     fused_T = sum(T_filter_list) / len(T_filter_list)
-    output = np.abs(np.fft.ifft2(fused_T, axes=(0, 1))).astype(np.float32)
+    output = np.real(np.fft.ifft2(fused_T, axes=(0, 1))).astype(np.float32)
 
     return np.clip(output, 0, 255)
 
@@ -129,13 +129,13 @@ for set_idx, (hdr_set, mask_set) in enumerate(zip(hdr_sets, mask_sets), start=1)
     image_files = [
         os.path.join('./hdr', hdr_set, f)
         for f in os.listdir(os.path.join('./hdr', hdr_set))
-        if f.endswith('.jpg')
+        if f.endswith('.png')
     ]
 
     mask_files = [
         os.path.join('./mask', mask_set, f)
         for f in os.listdir(os.path.join('./mask', mask_set))
-        if f.endswith('.jpg')
+        if f.endswith('.png')
     ]
 
     image_files = sorted(image_files)
@@ -143,8 +143,12 @@ for set_idx, (hdr_set, mask_set) in enumerate(zip(hdr_sets, mask_sets), start=1)
 
     if set_idx == 1:
         base_image = 0
-    else:
+    
+    elif set_idx == 2:
         base_image = 1
+
+    else:
+        base_image = 2
 
 
     print(f"[Set {set_idx}] 入力画像の枚数: {len(image_files)}")

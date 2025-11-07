@@ -5,7 +5,7 @@ import os
 
 # 画像読み込み（グレースケール）
 def load_image(path):
-    img = Image.open(path).convert("L") 
+    img = Image.open(path).convert("RGB") 
     return np.array(img)
 
 # PSNR
@@ -18,21 +18,21 @@ def calculate_psnr(img1, img2):
 
 # SSIM
 def calculate_ssim(img1, img2):
-    score, _ = ssim(img1, img2, full=True, data_range=255)
+    score, _ = ssim(img1, img2, full=True, data_range=255, channel_axis=2)
     return score
 
 # 評価
 def evaluation():
-    base_path = os.path.join("before", f"cropped_image_0001.jpg")
-    edit_path = os.path.join("edit", f"cropped_image_0001.jpg")
-    avg_path  = os.path.join("results", "average", f"average_image_set_0001_frame_0.png")
-    hdr_path  = os.path.join("results", "hdr", f"fused_blocks_set_0001_frame_0.png")
+    base_path = os.path.join("before", f"cropped_image_0005.jpg")
+    edit_path = os.path.join("edit", f"cropped_image_0005.jpg")
+    hdr_path  = os.path.join("results", "hdr", f"fused_blocks_set_0005_frame_0.png")
+    avg_path  = os.path.join("results", "average", f"average_image_set_0005_frame_0.png")
 
     base = load_image(base_path)
     targets = [
         ("ノイズ画像", edit_path),
-        ("average", avg_path),
         ("hdr", hdr_path),
+        ("average", avg_path),
     ]
 
     for label, tpath in targets:

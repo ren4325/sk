@@ -111,7 +111,7 @@ for i, input_image_name in enumerate(input_images, start=1):
         cropped_image = crop_2(image, original_width, original_height, center_x, center_y, 1/scale_factor, rotation_angle, x_shift, y_shift)
         cropped_mask_img = crop_2(mask_img, original_width, original_height, center_x, center_y, 1/scale_factor, rotation_angle, x_shift, y_shift)
 
-        save(cropped_image, set_folder, f"{g_idx}_{g_name}_filtered.jpg")
-        save(cropped_mask_img, mask_folder, f"{g_idx}_{g_name}_mask.jpg")
+        save(cropped_image, set_folder, f"{g_idx}_{g_name}_filtered.png")
+        save(cropped_mask_img, mask_folder, f"{g_idx}_{g_name}_mask.png")
     
 print(f"hdr_set_{i} を作成")
