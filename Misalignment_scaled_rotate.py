@@ -38,9 +38,9 @@ def save(cropped_image, data_path, output_name):
 data_path = "./data/"
 op_data_path = "./edit/"
 input_name = "sample.jpg"
-output_name_1 = "cropped_image_0001.jpg"
-output_name_2 = "cropped_image_2.jpg"
-output_name_3 = "cropped_image_3.jpg"
+output_name_1 = "cropped_image_0001.png"
+output_name_2 = "cropped_image_2.png"
+output_name_3 = "cropped_image_3.png"
 
 image = read(data_path, input_name)
 
@@ -56,13 +56,13 @@ save(cropped_image_1, op_data_path, output_name_1)
 
 for i in range(2, 11) :
     x_shift, y_shift = 0, 0
-    scale_factor = 1 + i / 7  # 拡大・縮小倍率
-    rotation_angle = 3 * i  # 回転角度
+    scale_factor = 1.2 ** (i - 1)   # 拡大・縮小倍率
+    rotation_angle = 3 * (i - 1)  # 回転角度
 
     cropped_image_2 = crop_2(image, original_width, original_height, new_width, new_height, scale_factor, rotation_angle, x, y, x_shift, y_shift)
 
-    save(cropped_image_2, op_data_path, f"cropped_image_{str(i).zfill(4)}.jpg")
+    save(cropped_image_2, op_data_path, f"cropped_image_{str(i).zfill(4)}.png")
 
 
 
-print("画像の一部を切り抜いて cropped_image.jpg として保存しました。")
+print("画像の一部を切り抜いて cropped_image.png として保存しました。")

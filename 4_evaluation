@@ -23,8 +23,8 @@ def calculate_ssim(img1, img2):
 
 # 評価
 def evaluation():
-    base_path = os.path.join("before", f"cropped_image_0005.jpg")
-    edit_path = os.path.join("edit", f"cropped_image_0005.jpg")
+    base_path = os.path.join("before", f"cropped_image_0005.png")
+    edit_path = os.path.join("edit", f"cropped_image_0005.png")
     hdr_path  = os.path.join("results", "hdr", f"fused_blocks_set_0005_frame_0.png")
     avg_path  = os.path.join("results", "average", f"average_image_set_0005_frame_0.png")
 
