@@ -126,12 +126,23 @@ def cross_power(transformed_array_1, transformed_array_2):
     return shift_x, shift_y
 
 
-def rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y):
+#def rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y):
     scale_factor = np.exp(shift_y * np.log(np.hypot(center_x, center_y)) / magnitude_1.shape[0])
     rotation_angle =-1 *( (shift_x * 360 / magnitude_1.shape[1]) % 360)  # 角度正規化
 
     return scale_factor, rotation_angle
 
+def rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y):
+    # log_polar_transform と同じ radius を使う
+    max_radius = np.minimum(center_x, center_y)
+    log_R = np.log(max_radius)
+
+    H, W = magnitude_1.shape
+
+    scale_factor = np.exp(shift_y * log_R / H)
+    rotation_angle = -1 * (shift_x * 360.0 / W)  # %360 するかは好み
+
+    return scale_factor, rotation_angle
 
 def save(image_array, data_path, output_name):
     # 振幅スペクトルを0-255の範囲にスケーリングして保存
@@ -185,8 +196,9 @@ for i, input_image_name in enumerate(input_images, start=1):
     all_magnitudes.append((magnitude_1, center_x, center_y))
 
     #グループ化
-    hdr_range = 5  # グループ幅
-    estimated_value = []  # CSVにそのまま流すリスト
+    
+hdr_range = 5  # グループ幅
+estimated_value = []  # CSVにそのまま流すリスト
 
 for i in range(len(input_images)):
     # グループ範囲
@@ -208,17 +220,17 @@ for i in range(len(input_images)):
         magnitude_1, center_x, center_y = all_magnitudes[g_index-1]
         scale_factor, rotation_angle = rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y)
 
-        print(f"  {g_name} -> shift=(0, 0), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
-        #print(f"  {g_name} -> shift=({shift_x},{shift_y}), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
+        print(f"  {g_name} -> shift=({shift_x},{shift_y}), scale={scale_factor:.3f}, rot={rotation_angle:.3f}")
 
         # set番号と基準画像も一緒に保存
+
         estimated_value.append([
             i+1,           # set番号
             base_name,     # 基準画像
             g_name,        # ファイル名
             g_index,       # インデックス
             0, 0,
-            #shift_x, shift_y,
+            #shift_x, shift_y, 対数極座標のxy値だからいらない
             scale_factor, rotation_angle
         ])
 
@@ -232,7 +244,6 @@ for i in range(len(input_images)):
     #print(f"Rotation angle (cropped_image_{base_image}対して): {round(rotation_angle, 3)} degrees")
 
     #csvファイル用
-    estimated_value.append([input_image_name, i, 0, 0, scale_factor, rotation_angle])
     #estimated_value.append([input_image_name, i, shift_x, shift_y, scale_factor, rotation_angle])
 
 

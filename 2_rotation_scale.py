@@ -58,7 +58,7 @@ def save(cropped_image, data_path, output_name):
     cropped_image.save(save_path)
 
 # 白画像の作成
-mask_img = Image.new("RGB", (3024, 3024), "white")
+mask_img = Image.new("RGB", (2000, 2000), "white")
 
 # データパスの指定
 input_path = "./edit/"
@@ -114,4 +114,4 @@ for i, input_image_name in enumerate(input_images, start=1):
         save(cropped_image, set_folder, f"{g_idx}_{g_name}_filtered.png")
         save(cropped_mask_img, mask_folder, f"{g_idx}_{g_name}_mask.png")
     
-print(f"hdr_set_{i} を作成")
+    print(f"hdr_set_{i} を作成")

@@ -31,8 +31,9 @@ def evaluation():
     base = load_image(base_path)
     targets = [
         ("ノイズ画像", edit_path),
-        ("hdr", hdr_path),
         ("average", avg_path),
+        ("hdr", hdr_path),
+
     ]
 
     for label, tpath in targets:
