@@ -7,7 +7,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-
+# hdr合成
 def image_fusion(image_list, c=100000, sigma=25):
 
     # FFT（周波数領域）に変換
@@ -17,20 +17,17 @@ def image_fusion(image_list, c=100000, sigma=25):
         T = np.fft.fft2(data, axes=(0, 1))
         T_list.append(T)
 
-    # 1枚目を基準に差分を取る
+    # 真ん中の画像を基準に差分を取る
     center_idx = len(T_list) // 2
     T_ref = T_list[center_idx]
     D_list = [T_ref - T for T in T_list]
 
 
-    # フィルタ A を計算
     A_list = []
     for D in D_list:
         abs2 = np.abs(D) ** 2
         A = abs2 / (abs2 + c * (sigma ** 2))
         A_list.append(A)
-
-    # フィルタ適用
     T_filter_list = [T + A * D for T, A, D in zip(T_list, A_list, D_list)]
 
     # 平均を取る
@@ -41,24 +38,17 @@ def image_fusion(image_list, c=100000, sigma=25):
 
     return np.clip(output, 0, 255)
 
-# =========================================================
-# 平均化による画像融合（単純平均）
-# =========================================================
+# 平均合成
 def average_fusion(image_array):
-    """
-    image_array: [H, W, C] の numpy 配列リスト
-    → 枚数で割っただけの単純平均
-    """
+
     if len(image_array) < 1:
         raise ValueError("画像リストが空です.")
 
-    images = np.stack(image_array).astype(np.float32)  # (N, H, W, C)
-    avg = np.mean(images, axis=0)                      # N方向に平均
+    images = np.stack(image_array).astype(np.float32) 
+    avg = np.mean(images, axis=0) 
     return avg.astype(np.float32)
 
-# =========================================================
 # 並列処理用のブロック融合関数
-# =========================================================
 def process_block(params):
     i, j, block_size, overlap, h, w, image_list, fusion_method = params
     stride_y = block_size[0] - overlap[0]
@@ -76,9 +66,7 @@ def process_block(params):
 
     return i, j, y_end, x_end, fused_block
 
-# =========================================================
 # 並列処理を使用したブロック融合
-# =========================================================
 def fuse_blocks_parallel(image_list, block_size=(4000, 6000), overlap=(20, 20), fusion_method=image_fusion):
     if len(image_list) < 1:
         raise ValueError("画像リストが空です.")
@@ -116,9 +104,7 @@ def fuse_blocks_parallel(image_list, block_size=(4000, 6000), overlap=(20, 20), 
 
     return fused_image.astype(np.uint8)
 
-# =========================================================
 # 画像の保存
-# =========================================================
 def save_images(images, folder_path, prefix):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -126,9 +112,9 @@ def save_images(images, folder_path, prefix):
         img_pil = Image.fromarray(img.astype(np.uint8))
         img_pil.save(os.path.join(folder_path, f"{prefix}_frame_{i}.png"))
 
-# =========================================================
 # メイン処理
-# =========================================================
+
+
 # 実行時間計測開始
 start_time = time.time()
 
@@ -139,7 +125,7 @@ results_avg_path = os.path.join(results_base_path, "average_no_collect")
 os.makedirs(results_hdr_path, exist_ok=True)
 os.makedirs(results_avg_path, exist_ok=True)
 
-# --- edit フォルダの画像をまとめて使う ---
+# edit フォルダの画像をまとめて使う
 edit_dir = "./edit"
 image_files = [
     os.path.join(edit_dir, f)
@@ -171,19 +157,19 @@ for set_idx in range(num_frames):
 
     print(f"[Set {set_idx}] 使用フレーム index: {list(range(start, end))}")
 
-    # ブロック HDR 合成（位置合わせなし・マスクなし）
+    # hdr合成
     fused_blocks = [fuse_blocks_parallel(group_images,
                                          block_size=(4000, 6000),
                                          overlap=(20, 20),
                                          fusion_method=image_fusion)]
 
-    # ブロック 単純平均 合成
+    # 平均 合成
     average_image = [fuse_blocks_parallel(group_images,
                                           block_size=(4000, 6000),
                                           overlap=(20, 20),
                                           fusion_method=average_fusion)]
 
-    # 保存処理（セットごとに出力）
+    # 保存
     set_name = f"{str(set_idx + 1).zfill(4)}"
     save_images(fused_blocks, results_hdr_path, f"nc_fused_blocks_set_{set_name}")
     save_images(average_image, results_avg_path, f"nc_average_image_set_{set_name}")
