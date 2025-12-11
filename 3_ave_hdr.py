@@ -38,10 +38,32 @@ def image_fusion(image_list, mask_list, base_image, c=100000, sigma=25):
 
 
 # 平均化による画像融合
-def average_fusion(image_array):
+def average_fusion(image_array, mask_list=None):
     if len(image_array) < 1:
         raise ValueError("画像リストが空です.")
-    return np.mean(image_array, axis=0)
+
+    # 画像をまとめて (N, H, W, C)
+    images = np.stack(image_array).astype(np.float32)
+
+
+    valid_masks = []
+    for mask in mask_list:
+        mask_arr = np.array(mask)
+        valid = (np.all(mask_arr > 128, axis=-1)).astype(np.float32)[..., None]
+        valid_masks.append(valid)
+
+    valid_masks = np.stack(valid_masks)  # (N, H, W, 1)
+
+    # ピクセルごとの「重なってる枚数」をマスクの01行列で計算
+    counts = valid_masks.sum(axis=0)  # (H, W, 1)
+    counts[counts == 0] = 1  # 0除算防止
+
+    # 有効なとこだけ足して、重なってる枚数で割る
+    weighted_sum = (images * valid_masks).sum(axis=0)
+    avg = weighted_sum / counts                       
+
+    return avg.astype(np.float32)
+
 
 # 並列処理用のブロック融合関数
 def process_block(params):
@@ -60,7 +82,7 @@ def process_block(params):
     if fusion_method == image_fusion:
         fused_block = fusion_method(block_list, mask_list, base_image)
     else:
-        fused_block = fusion_method(block_list)
+        fused_block = fusion_method(block_list, mask_list)
 
 
     return i, j, y_end, x_end, fused_block
@@ -168,6 +190,7 @@ for set_idx, (hdr_set, mask_set) in enumerate(zip(hdr_sets, mask_sets), start=1)
                                          fusion_method=image_fusion,
                                          base_image= base_image)]
     average_image = [fuse_blocks_parallel([img.numpy() for img in original_frames],
+                                          mask_list=mask_arrays,
                                           fusion_method=average_fusion)]
 
     # 保存処理（セットごとに出力）

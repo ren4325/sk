@@ -133,7 +133,6 @@ def cross_power(transformed_array_1, transformed_array_2):
     return scale_factor, rotation_angle
 
 def rho_theta(magnitude_1, shift_x, shift_y, center_x, center_y):
-    # log_polar_transform と同じ radius を使う
     max_radius = np.minimum(center_x, center_y)
     log_R = np.log(max_radius)
 
@@ -196,7 +195,7 @@ for i, input_image_name in enumerate(input_images, start=1):
     all_magnitudes.append((magnitude_1, center_x, center_y))
 
     #グループ化
-    
+
 hdr_range = 5  # グループ幅
 estimated_value = []  # CSVにそのまま流すリスト
 

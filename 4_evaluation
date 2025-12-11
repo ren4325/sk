@@ -3,9 +3,9 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 import os
 
-# 画像読み込み（グレースケール）
+# 画像読み込み（RGB）
 def load_image(path):
-    img = Image.open(path).convert("RGB") 
+    img = Image.open(path).convert("RGB")
     return np.array(img)
 
 # PSNR
@@ -13,7 +13,7 @@ def calculate_psnr(img1, img2):
     diff = img1.astype(np.float64) - img2.astype(np.float64)
     mse = np.mean(diff ** 2)
     if mse == 0:
-        return float('inf')
+        return float("inf")
     return 10 * np.log10((255.0 ** 2) / mse)
 
 # SSIM
@@ -21,35 +21,52 @@ def calculate_ssim(img1, img2):
     score, _ = ssim(img1, img2, full=True, data_range=255, channel_axis=2)
     return score
 
-# 評価
-def evaluation():
-    base_path = os.path.join("before", f"cropped_image_0005.png")
-    edit_path = os.path.join("edit", f"cropped_image_0005.png")
-    hdr_path  = os.path.join("results", "hdr", f"fused_blocks_set_0005_frame_0.png")
-    avg_path  = os.path.join("results", "average", f"average_image_set_0005_frame_0.png")
+# ---------------------------------------------------
+# 10枚すべてを評価する関数
+# ---------------------------------------------------
+def evaluate_all():
+    print("=== 10枚の評価結果 ===\n")
 
-    base = load_image(base_path)
-    targets = [
-        ("ノイズ画像", edit_path),
-        ("average", avg_path),
-        ("hdr", hdr_path),
+    for idx in range(1, 11):
+        img_id = f"{idx:04d}"  # → 0001, 0002 ... 0010
 
-    ]
+        base_path = os.path.join("before",  f"cropped_image_{img_id}.png")
+        edit_path = os.path.join("edit",    f"cropped_image_{img_id}.png")
+        hdr_path  = os.path.join("results", "hdr",     f"fused_blocks_set_{img_id}_frame_0.png")
+        avg_path  = os.path.join("results", "average", f"average_image_set_{img_id}_frame_0.png")
 
-    for label, tpath in targets:
-        try:
-            img = load_image(tpath)
-        except Exception as e:
-            print(f"読み込み失敗: {label} -> {tpath}")
+        # 基準画像ロード
+        if not os.path.exists(base_path):
+            print(f"[{img_id}] 基準画像が存在しません: {base_path}")
             continue
 
-        psnr_val = calculate_psnr(base, img)
-        ssim_val = calculate_ssim(base, img)
+        base = load_image(base_path)
 
-        print(f"< {label}/基準画像 >")
-        print(f" ・PSNR: {psnr_val:.2f} dB")
-        print(f" ・SSIM: {ssim_val:.4f}")
+        # 評価対象
+        targets = [
+            ("ノイズ画像", edit_path),
+            ("HDR",        hdr_path),
+            ("Average",    avg_path),
+        ]
 
-# --- 実行例 ---
+        print(f"=== {img_id} ===")
+
+        for label, tpath in targets:
+            if not os.path.exists(tpath):
+                print(f"  ⚠ {label} が見つからない: {tpath}")
+                continue
+
+            img = load_image(tpath)
+
+            psnr_val = calculate_psnr(base, img)
+            ssim_val = calculate_ssim(base, img)
+
+            print(f"  {label}:")
+            print(f"    PSNR: {psnr_val:.2f} dB")
+            print(f"    SSIM: {ssim_val:.4f}")
+
+        print("")  # 区切り行
+
+# 実行
 if __name__ == "__main__":
-    evaluation()
+    evaluate_all()
